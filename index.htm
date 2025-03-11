@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Designados do Áudio e Vídeo</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            padding: 0;
+            background-color: #f0f0f0;
+        }
+        #tabela-container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+            width: 80%;
+            margin: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 10px;
+            text-align: center;
+            border: 1px solid #ddd;
+        }
+        th {
+            background-color: #007bff;
+            color: white;
+        }
+        button {
+            margin-top: 10px;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 5px;
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+    <!-- Adicionando o link para a biblioteca html2pdf.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.2/html2pdf.bundle.js"></script>
+</head>
+<body>
+    <div id="tabela-container">
+        <h2 id="titulo-mes">Designados do Áudio e Vídeo</h2>
+        <label for="mes">Selecione o mês:</label>
+        <input type="month" id="mes">
+        <button onclick="gerarTabela()">Gerar Tabela</button>
+        <button onclick="gerarPDF()">Gerar PDF</button>
+
+        <div id="tabela"></div>
+    </div>
+
+    <script>
+        const trabalhadores = ['Tony', 'Daniel', 'Flavio', 'Denis', 'Marlon'];
+        let rotacaoIndex = 0;
+
+        function gerarTabela() {
+            embaralharTrabalhadores();
+            const monthInput = document.getElementById('mes').value;
+
+            if (!monthInput) {
+                alert('Por favor, selecione um mês.');
+                return;
+            }
+
+            const [ano, mes] = monthInput.split('-');
+            const nomeMes = new Date(ano, mes - 1).toLocaleString('pt-BR', { month: 'long', year: 'numeric' });
+            document.getElementById('titulo-mes').textContent = `Designados do Áudio e Vídeo do mês de ${nomeMes.charAt(0).toUpperCase() + nomeMes.slice(1)}`;
+
+            const data = new Date(ano, mes - 1, 1);
+            const semanas = [];
+
+            while (data.getMonth() + 1 == mes) {
+                const semana = [];
+
+                for (let i = 0; i < 7; i++) {
+                    if ((data.getDay() === 4 || data.getDay() === 0) && data.getMonth() + 1 == parseInt(mes)) { 
+                        semana.push(new Date(data));
+                    }
+                    data.setDate(data.getDate() + 1);
+                }
+
+                if (semana.length > 0) {
+                    semanas.push(semana);
+                }
+            }
+
+            renderizarTabela(semanas);
+        }
+
+        function renderizarTabela(semanas) {
+            const tabelaDiv = document.getElementById('tabela');
+            tabelaDiv.innerHTML = '';
+
+            const tabela = document.createElement('table');
+            const thead = document.createElement('thead');
+            thead.innerHTML = '<tr><th>Semana</th><th>Dias</th><th>Operador</th><th>Palco</th></tr>';
+
+            const tbody = document.createElement('tbody');
+
+            semanas.forEach((semana, index) => {
+                const [operador, palco] = sortearTrabalhadores();
+                const dias = semana.map(data => formatarDia(data)).join(' e ');
+
+                if (dias) {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>Semana ${index + 1}</td>
+                        <td>Dias ${dias}</td>
+                        <td>${operador}</td>
+                        <td>${palco}</td>
+                    `;
+                    tbody.appendChild(tr);
+                }
+            });
+
+            tabela.appendChild(thead);
+            tabela.appendChild(tbody);
+            tabelaDiv.appendChild(tabela);
+        }
+
+        function sortearTrabalhadores() {
+            const operador = trabalhadores[rotacaoIndex % trabalhadores.length];
+            const palco = trabalhadores[(rotacaoIndex + 1) % trabalhadores.length];
+            rotacaoIndex += 2;
+            return [operador, palco];
+        }
+
+        function embaralharTrabalhadores() {
+            for (let i = trabalhadores.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [trabalhadores[i], trabalhadores[j]] = [trabalhadores[j], trabalhadores[i]];
+            }
+            rotacaoIndex = 0;
+        }
+
+        function formatarDia(data) {
+            return String(data.getDate()).padStart(2, '0');
+        }
+
+        // Função para gerar o PDF usando html2pdf.js
+        function gerarPDF() {
+            const tabela = document.querySelector('table');
+
+            if (tabela) {
+                html2pdf()
+                    .from(tabela)
+                    .save('designados_audio_video.pdf');
+            } else {
+                alert('Por favor, gere a tabela primeiro.');
+            }
+        }
+    </script>
+</body>
+</html>
